@@ -1,0 +1,145 @@
+Multi-Themed ChatGPT-like Website using OpenAI API
+
+📘 Overview
+
+I want to build a **ChatGPT-style AI chatbot web app** using **Python (FastAPI)** and the **OpenAI API**. The site should feature a real-time chat interface, multiple aesthetic UI themes, OAuth login (Google/GitHub), user profile, chat history, and settings — all backed by a PostgreSQL database.
+
+🧰 Tech Stack
+
+| Layer      | Tech Stack                                     |
+| ---------- | ---------------------------------------------- |
+| Frontend   | React + Tailwind CSS + DaisyUI                 |
+| Backend    | FastAPI (Python, async)                        |
+| Auth       | JWT-based authentication + Google/GitHub OAuth |
+| AI Model   | OpenAI GPT-4o / GPT-3.5-turbo                  |
+| Database   | PostgreSQL                                     |
+| Deployment | Vercel (frontend) + Railway/Render (backend)   |
+| Storage    | PostgreSQL for user settings and chat logs     |
+
+🎨 UI Themes (Stored in Database)
+
+The app supports at least 6 fully distinct UI themes:
+
+1. 🌞 Light – classic clean white layout
+2. 🌚 Dark – night mode, modern dark style
+3. 🕸 Hacker – black background, green monospace terminal style
+4. 💾 Retro Terminal – old-school green/amber 80s style
+5. 🌈 Neon Cyberpunk – dark base with glowing neon accents
+6. 💡 Zen Minimal – clean, soft tones with large spacing
+
+Theme Switching Flow:
+
+* The selected theme is saved in the database (`preferred_theme` in `User` table)
+* On login, the backend returns the theme via `/user/profile`
+* Frontend applies it using `data-theme="..."` to the `<html>` element
+* When user changes theme, frontend sends a request to backend to update the theme
+* No use of localStorage — the database is the **only source of truth**
+
+🔐 Authentication
+
+Supports two login methods:
+
+1. Email & Password
+2. OAuth (Google & GitHub)
+
+* Auth is managed via JWT (stored in frontend memory or cookie)
+* On login/signup, user info and settings (e.g., theme) are stored in PostgreSQL
+* On re-login from another device, theme is auto-applied from the DB
+
+💬 Chat Interface
+
+* Responsive, real-time chat UI
+* User input box + assistant responses
+* Typing animation (streaming API)
+* Assistant and user messages shown in chat bubbles
+* Scroll-to-latest feature
+
+🧾 Chat History
+
+* All chats and messages are saved in the database
+* Each user has access to:
+
+  * View a list of past chats
+  * Rename or delete individual conversations
+  * Reopen and continue existing chats
+
+⚙️ Settings Page
+
+Users can:
+
+* Change username
+* Change preferred theme (persisted in DB)
+* Select OpenAI model (gpt-4o or gpt-3.5)
+* See API usage stats
+
+🧠 OpenAI API Integration
+
+* Backend handles communication with OpenAI API
+* Sends user messages + history to `gpt-4o` or `gpt-3.5-turbo`
+* Streams responses back to frontend
+* Stores both question and response in the database
+
+📦 Database Models (PostgreSQL)
+
+User
+
+id
+email
+username
+hashed_password (nullable if OAuth)
+provider (e.g., google, github, email)
+preferred_theme
+preferred_model
+created_at
+
+Chat
+
+id
+user_id (foreign key)
+title
+created_at
+
+Message
+
+id
+chat_id (foreign key)
+user_id (foreign key)
+role (user / assistant / system)
+content
+created_at
+
+📁 Project Structure
+
+/frontend (React)
+
+frontend/
+├── public/
+├── src/
+│   ├── assets/             # Images, icons, etc.
+│   ├── components/         # Chat UI, buttons, header, theme switch
+│   ├── pages/              # Home, Login, Chat, Settings
+│   ├── themes/             # Theme config (custom + daisy)
+│   ├── utils/              # API helper, localStorage
+│   └── App.jsx
+├── tailwind.config.js
+└── package.json
+
+/backend (FastAPI)
+
+backend/
+├── app/
+│   ├── api/
+│   │   ├── auth.py         # JWT-based login/signup
+│   │   ├── chat.py         # OpenAI endpoint
+│   │   ├── user.py         # User settings
+│   │   └── history.py      # Save/retrieve chat history
+│   ├── models/
+│   │   ├── user.py
+│   │   ├── message.py
+│   ├── db/
+│   │   ├── session.py
+│   │   └── schemas.py
+│   ├── core/
+│   │   └── config.py       # Settings, keys
+│   └── main.py             # FastAPI app entry
+├── requirements.txt

@@ -1,0 +1,128 @@
+/*frontend/src/themes/customThemes.css Custom theme configurations */
+
+[data-theme="hacker"] {
+    --p: 120 100% 50%;
+    --s: 60 100% 50%;
+    --a: 300 100% 50%;
+    --n: 0 0% 0%;
+    --nc: 120 100% 80%;
+    --b1: 0 0% 5%;
+    --b2: 0 0% 10%;
+    --b3: 0 0% 15%;
+    --bc: 120 100% 70%;
+    background: #000000;
+    color: #00ff00;
+}
+
+[data-theme="hacker"] .bg-base-100 {
+    background-color: #000000 !important;
+}
+
+[data-theme="hacker"] .bg-base-200 {
+    background-color: #001100 !important;
+}
+
+[data-theme="hacker"] .text-base-content {
+    color: #00ff00 !important;
+}
+
+[data-theme="hacker"] * {
+    font-family: 'Courier New', monospace !important;
+}
+
+[data-theme="retro"] {
+    --p: 45 100% 51%;
+    --s: 45 100% 51%;
+    --a: 315 100% 51%;
+    --n: 45 20% 5%;
+    --nc: 45 100% 80%;
+    --b1: 45 20% 8%;
+    --b2: 45 20% 12%;
+    --b3: 45 20% 16%;
+    --bc: 45 100% 70%;
+    background: #1a1a0a;
+    color: #ffcc00;
+}
+
+[data-theme="retro"] * {
+    font-family: 'Courier New', monospace !important;
+}
+
+[data-theme="cyberpunk"] {
+    --p: 300 100% 50%;
+    --s: 180 100% 50%;
+    --a: 60 100% 50%;
+    --n: 260 20% 5%;
+    --nc: 300 100% 80%;
+    --b1: 260 20% 8%;
+    --b2: 260 20% 12%;
+    --b3: 260 20% 16%;
+    --bc: 300 100% 70%;
+    background: linear-gradient(45deg, #0a0a1a, #1a0a1a);
+}
+
+[data-theme="cyberpunk"] .neon-text {
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+}
+
+[data-theme="zen"] {
+    --p: 210 15% 70%;
+    --s: 190 15% 70%;
+    --a: 170 15% 70%;
+    --n: 210 15% 10%;
+    --nc: 210 15% 90%;
+    --b1: 210 15% 98%;
+    --b2: 210 15% 95%;
+    --b3: 210 15% 92%;
+    --bc: 210 15% 20%;
+}
+
+.typing-animation {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0.6;
+    animation: typing 1.4s infinite;
+}
+
+.typing-animation:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-animation:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+.chat-container {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.message-bubble {
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.sidebar-transition {
+    transition: transform 0.3s ease-in-out;
+}
+
+@media (max-width: 768px) {
+    .sidebar-mobile {
+        transform: translateX(-100%);
+    }
+    .sidebar-mobile.open {
+        transform: translateX(0);
+    }
+}
