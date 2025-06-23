@@ -1,7 +1,7 @@
 // frontend/src/utils/api.js
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 // Token management functions
 const getToken = () => localStorage.getItem('token');
@@ -29,7 +29,7 @@ axios.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       removeToken();
-      window.location.href = '/login';
+      window.location.reload();
     }
     return Promise.reject(error);
   }
@@ -94,63 +94,69 @@ export const api = {
     const token = getToken();
     if (!token) throw new Error('No authentication token');
     
-    const res = await fetch(`${BASE_URL}/chat/send`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        message, 
-        chat_id: chatId || null 
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    let fullContent = '';
-
+    let reader;
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        
-        // Process complete lines
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i].trim();
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return;
-            }
-            try {
-              const json = JSON.parse(data);
-              if (json.content) {
-                fullContent += json.content;
-                yield fullContent;
-              }
-            } catch (e) {
-              console.warn('Failed to parse SSE data:', data);
-            }
-          }
+        const res = await fetch(`${BASE_URL}/chat/send`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                message, 
+                chat_id: chatId || null 
+            })
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errorText}`);
         }
-        
-        // Keep the last incomplete line in buffer
-        buffer = lines[lines.length - 1];
-      }
+
+        reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let fullContent = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            
+            for (let i = 0; i < lines.length - 1; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    if (data === '[DONE]') return;
+                    
+                    try {
+                        const json = JSON.parse(data);
+                        if (json.content) {
+                            fullContent += json.content;
+                            yield fullContent;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to parse SSE data:', data);
+                    }
+                }
+            }
+            buffer = lines[lines.length - 1];
+        }
     } catch (error) {
-      console.error('Stream reading error:', error);
-      throw error;
+        console.error('Stream reading error:', error);
+        throw error;
+    } finally {
+        if (reader) {
+            try {
+                reader.releaseLock();
+            } catch (e) {
+                console.warn('Failed to release reader lock:', e);
+            }
+        }
     }
-  },
+},
 
   getUserProfile: async () => {
     const res = await axios.get('/user/profile');

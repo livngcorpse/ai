@@ -1,4 +1,5 @@
-# backend/app/core/config.py
+# backend/app/core/config.py - Update validators:
+
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
 from typing import List
@@ -6,15 +7,15 @@ import secrets
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql://user:password@localhost:5432/ai_chat_db"
     
     # JWT
-    SECRET_KEY: str
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # OpenAI
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: str = ""
     
     # OAuth
     GOOGLE_CLIENT_ID: str = ""
@@ -38,13 +39,6 @@ class Settings(BaseSettings):
             raise ValueError("SECRET_KEY must be at least 32 characters long")
         return v
     
-    @field_validator('DATABASE_URL')
-    @classmethod
-    def validate_database_url(cls, v):
-        if not v:
-            raise ValueError("DATABASE_URL is required")
-        return v
-    
     @field_validator('OPENAI_API_KEY')
     @classmethod
     def validate_openai_key(cls, v):
@@ -57,7 +51,6 @@ class Settings(BaseSettings):
     @field_validator('ALLOWED_ORIGINS')
     @classmethod
     def validate_cors_origins(cls, v):
-        # In production, be more restrictive
         if isinstance(v, str):
             return [v]
         return v

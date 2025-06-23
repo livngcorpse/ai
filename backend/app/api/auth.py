@@ -129,14 +129,19 @@ async def oauth_login(provider: str, code: str, db: AsyncSession = Depends(get_d
     # Fallback if email is missing (GitHub edge case)
     email = user_data.get("email")
     if not email:
-    # For GitHub, try getting email from API
+        # For GitHub, try getting email from API
         if provider == "github":
-            email_resp = await client.get("https://api.github.com/user/emails", headers=user_headers)
-            emails = email_resp.json()
-            primary_email = next((e["email"] for e in emails if e["primary"]), None)
-            email = primary_email or f"{user_data.get('login')}@users.noreply.github.com"
-    else:
-        email = f"{user_data.get('login')}@{provider}.com"
+            async with httpx.AsyncClient() as email_client:
+                email_resp = await email_client.get("https://api.github.com/user/emails", 
+                                                headers=user_headers)
+                if email_resp.status_code == 200:
+                    emails = email_resp.json()
+                    primary_email = next((e["email"] for e in emails if e["primary"]), None)
+                    email = primary_email or f"{user_data.get('login')}@users.noreply.github.com"
+                else:
+                    email = f"{user_data.get('login')}@users.noreply.github.com"
+        else:
+            email = f"{user_data.get('login')}@{provider}.com"
 
     username = user_data.get("name") or user_data.get("login")
 

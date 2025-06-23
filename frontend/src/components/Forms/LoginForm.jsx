@@ -31,20 +31,24 @@ const LoginForm = ({ onLogin, isLoading }) => {
     };
 
     const handleOAuth = (provider) => {
-        // TODO: Replace with actual OAuth client IDs from environment variables
-        const redirectUri = `${window.location.origin}/oauth-callback/${provider}`;
-        let oauthUrl = '';
+    const redirectUri = `${window.location.origin}/oauth-callback/${provider}`;
+    let oauthUrl = '';
 
-        if (provider === 'google') {
-            // Replace YOUR_GOOGLE_CLIENT_ID with actual client ID
-            oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=${redirectUri}&response_type=code&scope=email profile`;
-        } else {
-            // Replace YOUR_GITHUB_CLIENT_ID with actual client ID
-            oauthUrl = `https://github.com/login/oauth/authorize?client_id=YOUR_GITHUB_CLIENT_ID&redirect_uri=${redirectUri}&scope=user:email`;
-        }
+    // Get client IDs from environment variables
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const githubClientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
 
-        window.location.href = oauthUrl;
-    };
+    if (provider === 'google' && googleClientId) {
+        oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=email profile`;
+    } else if (provider === 'github' && githubClientId) {
+        oauthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=user:email`;
+    } else {
+        console.error(`${provider} OAuth not configured`);
+        return;
+    }
+
+    window.location.href = oauthUrl;
+};
 
     return (
         <div className="card w-96 bg-base-100 shadow-xl">
@@ -108,10 +112,17 @@ const LoginForm = ({ onLogin, isLoading }) => {
                     <div className="form-control mt-6">
                         <button
                             type="submit"
-                            className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
+                            className={`btn btn-primary ${isLoading ? 'btn-loading' : ''}`}
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Please wait...' : (isRegister ? 'Create Account' : 'Sign In')}
+                            {isLoading ? (
+                                <>
+                                    <span className="loading loading-spinner loading-sm"></span>
+                                    Please wait...
+                                </>
+                            ) : (
+                                isRegister ? 'Create Account' : 'Sign In'
+                            )}
                         </button>
                     </div>
                 </form>

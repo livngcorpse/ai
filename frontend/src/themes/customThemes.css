@@ -126,3 +126,35 @@
         transform: translateX(0);
     }
 }
+/* Add to the end of customThemes.css */
+.btn-loading {
+  pointer-events: none;
+}
+
+.btn-loading::before {
+  content: "";
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Fix for mobile sidebar */
+@media (max-width: 768px) {
+  .sidebar-mobile {
+    transform: translateX(-100%);
+  }
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+}

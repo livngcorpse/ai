@@ -1,7 +1,5 @@
-# backend/main.py
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
 import uvicorn
 
@@ -34,15 +32,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)):
-    try:
-        # Test database connection
-        await db.execute(text("SELECT 1"))
-        return {"status": "healthy", "database": "connected"}
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
-
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -63,8 +52,13 @@ async def root():
     return {"message": "AI Chat API is running"}
 
 @app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+async def health_check(db: AsyncSession = Depends(get_db)):
+    try:
+        # Test database connection
+        await db.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
