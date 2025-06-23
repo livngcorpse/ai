@@ -4,7 +4,12 @@ from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 
 # Convert sync URL to async URL
-DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+if settings.DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif settings.DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = settings.DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+else:
+    DATABASE_URL = settings.DATABASE_URL
 
 engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

@@ -1,4 +1,4 @@
-//frontend/src/pages/ChatPage.jsx
+// frontend/src/pages/ChatPage.jsx
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Layout/Header';
 import Sidebar from '../components/Layout/Sidebar';
@@ -13,6 +13,7 @@ const ChatPage = ({ user, onLogout, onUpdateSettings }) => {
     const [currentChat, setCurrentChat] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         loadChats();
@@ -24,22 +25,36 @@ const ChatPage = ({ user, onLogout, onUpdateSettings }) => {
             setChats(chatHistory);
         } catch (error) {
             console.error('Failed to load chats:', error);
+            setError('Failed to load chat history');
         }
     };
 
     const handleNewChat = () => {
-        setCurrentChat({ id: Date.now(), title: 'New Chat' });
+        setCurrentChat(null);
         setMessages([]);
         setSidebarOpen(false);
+        setError('');
     };
 
-    const handleSelectChat = (chatId) => {
-        setCurrentChat({ id: chatId, title: `Chat ${chatId}` });
-        setMessages([]);
-        setSidebarOpen(false);
+    const handleSelectChat = async (chatId) => {
+        try {
+            // TODO: Implement getChatMessages API endpoint
+            // const chatMessages = await api.getChatMessages(chatId);
+            // setMessages(chatMessages);
+            
+            setCurrentChat({ id: chatId, title: `Chat ${chatId}` });
+            setMessages([]); // Placeholder until API is implemented
+            setSidebarOpen(false);
+            setError('');
+        } catch (error) {
+            console.error('Failed to load chat:', error);
+            setError('Failed to load chat messages');
+        }
     };
 
     const handleSendMessage = async (content) => {
+        if (!content.trim()) return;
+
         const userMessage = {
             role: 'user',
             content,
@@ -48,6 +63,7 @@ const ChatPage = ({ user, onLogout, onUpdateSettings }) => {
 
         setMessages(prev => [...prev, userMessage]);
         setIsTyping(true);
+        setError('');
 
         try {
             const responseGenerator = api.sendMessage(content, currentChat?.id);
@@ -57,23 +73,57 @@ const ChatPage = ({ user, onLogout, onUpdateSettings }) => {
                 created_at: new Date().toISOString()
             };
 
+            let hasAddedMessage = false;
+
             for await (const chunk of responseGenerator) {
-                assistantMessage.content = chunk;
+                assistantMessage = {
+                    ...assistantMessage,
+                    content: chunk
+                };
+
                 setMessages(prev => {
                     const newMessages = [...prev];
-                    const lastMessage = newMessages[newMessages.length - 1];
-                    if (lastMessage && lastMessage.role === 'assistant') {
-                        newMessages[newMessages.length - 1] = assistantMessage;
-                    } else {
+                    if (!hasAddedMessage) {
                         newMessages.push(assistantMessage);
+                        hasAddedMessage = true;
+                    } else {
+                        // Update the last message if it's from assistant
+                        const lastMessage = newMessages[newMessages.length - 1];
+                        if (lastMessage && lastMessage.role === 'assistant') {
+                            newMessages[newMessages.length - 1] = assistantMessage;
+                        }
                     }
                     return newMessages;
                 });
             }
+
+            // Reload chats to get updated list
+            loadChats();
+
         } catch (error) {
             console.error('Failed to send message:', error);
+            setError('Failed to send message. Please try again.');
+            
+            // Add error message to chat
+            const errorMessage = {
+                role: 'assistant',
+                content: 'Sorry, I encountered an error. Please try again.',
+                created_at: new Date().toISOString(),
+                isError: true
+            };
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
+        }
+    };
+
+    const handleUpdateSettings = async (newSettings) => {
+        try {
+            await onUpdateSettings(newSettings);
+            setSettingsOpen(false);
+        } catch (error) {
+            console.error('Failed to update settings:', error);
+            throw error; // Let SettingsModal handle the error
         }
     };
 
@@ -96,6 +146,18 @@ const ChatPage = ({ user, onLogout, onUpdateSettings }) => {
                     onOpenSettings={() => setSettingsOpen(true)}
                 />
 
+                {error && (
+                    <div className="alert alert-error m-4">
+                        <span>{error}</span>
+                        <button 
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => setError('')}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
+
                 <div className="flex-1 min-h-0">
                     <ChatInterface
                         messages={messages}
@@ -109,7 +171,7 @@ const ChatPage = ({ user, onLogout, onUpdateSettings }) => {
                 isOpen={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
                 currentUser={user}
-                onUpdateSettings={onUpdateSettings}
+                onUpdateSettings={handleUpdateSettings}
             />
         </div>
     );

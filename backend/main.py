@@ -6,16 +6,26 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from app.core.config import settings
-from app.db.session import create_tables
+from app.db.session import create_tables, get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 from app.api import auth, chat, user, history
+import logging
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    await create_tables()
+    try:
+        await create_tables()
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {e}")
+        raise
     yield
     # Shutdown
-    pass
+    logger.info("Application shutting down")
 
 app = FastAPI(
     title="AI Chat API",
@@ -23,6 +33,15 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+@app.get("/health")
+async def health_check(db: AsyncSession = Depends(get_db)):
+    try:
+        # Test database connection
+        await db.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
 
 # CORS middleware
 app.add_middleware(
