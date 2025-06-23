@@ -60,6 +60,64 @@ export const api = {
       }
 
       buffer = parts[parts.length - 1];
+
+const getToken = () => localStorage.getItem('token');
+const setToken = (token) => localStorage.setItem('token', token);
+const removeToken = () => localStorage.removeItem('token');
+
+export const api = {
+  login: async (credentials) => {
+    const res = await axios.post(`${BASE_URL}/auth/login`, new URLSearchParams({
+      username: credentials.email,
+      password: credentials.password
+    }));
+    // Store token after successful login
+    if (res.data.access_token) {
+      setToken(res.data.access_token);
+    }
+    return res.data;
+  },
+
+  register: async (data) => {
+    const res = await axios.post(`${BASE_URL}/auth/register`, data);
+    // Store token after successful registration
+    if (res.data.access_token) {
+      setToken(res.data.access_token);
+    }
+    return res.data;
+  },
+
+  updateProfile: async (updates) => {
+    const res = await axios.put(`${BASE_URL}/user/profile`, updates, {
+      headers: { Authorization: `Bearer ${getToken()}` }
+    });
+    return res.data;
+  },
+
+  getChatHistory: async () => {
+    const res = await axios.get(`${BASE_URL}/history/chats`, {
+      headers: { Authorization: `Bearer ${getToken()}` }
+    });
+    return res.data;
+  },
+
+  sendMessage: async function* (message, chatId) {
+    const token = getToken();
+    if (!token) throw new Error('No authentication token');
+    
+    const res = await fetch(`${BASE_URL}/chat/send`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ message, chat_id: chatId })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // ... rest remains same
+  }
+};
     }
   }
 };

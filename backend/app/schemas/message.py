@@ -2,6 +2,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from app.models.message import MessageRole
+from typing import Optional
 
 class MessageBase(BaseModel):
     role: MessageRole

@@ -83,7 +83,8 @@ async def delete_chat(
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
     
-    await db.delete(chat)
+    stmt = delete(Chat).where(Chat.id == chat_id, Chat.user_id == current_user.id)
+    await db.execute(stmt)
     await db.commit()
     
     return {"message": "Chat deleted successfully"}

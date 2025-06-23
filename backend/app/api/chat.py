@@ -79,7 +79,7 @@ async def send_message(
             
             full_response = ""
             async for chunk in response:
-                if chunk.choices[0].delta.get("content"):
+                if chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_response += content
                     yield f"data: {json.dumps({'content': content, 'done': False})}\n\n"
@@ -107,3 +107,25 @@ async def send_message(
             "Connection": "keep-alive",
         }
     )
+
+# Replace:
+import openai
+openai.api_key = settings.OPENAI_API_KEY
+
+# With:
+from openai import AsyncOpenAI
+
+# Replace the generate_response function's OpenAI call with the following inside the generate_response async function:
+client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+response = await client.chat.completions.create(
+    model=current_user.preferred_model.value,
+    messages=openai_messages,
+    stream=True,
+    temperature=0.7,
+    max_tokens=1000
+)
+
+async for chunk in response:
+    if chunk.choices[0].delta.content:
+        content = chunk.choices[0].delta.content
+        # rest stays same

@@ -33,7 +33,8 @@ const App = () => {
     };
 
     const handleLogout = () => {
-        setUser(null);
+      removeToken(); // Clear stored token
+      setUser(null);
     };
 
     const handleUpdateSettings = async (newSettings) => {
